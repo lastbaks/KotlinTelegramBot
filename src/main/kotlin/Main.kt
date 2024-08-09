@@ -1,5 +1,10 @@
 package org.example
 
+import java.io.File
+
 fun main() {
-    println("Заготовка проекта \"Телеграм Бот\"")
+    val wordsFile = File("words.txt")
+    wordsFile.createNewFile()
+    val textList = wordsFile.readLines()
+    textList.forEach { println(it) }
 }
