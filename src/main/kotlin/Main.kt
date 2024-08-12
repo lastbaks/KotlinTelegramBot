@@ -2,12 +2,6 @@ package org.example
 
 import java.io.File
 
-data class Word(
-    val original: String,
-    val translate: String,
-    var correctAnswersCount: Int = 0,
-)
-
 fun main() {
     val dictionary = mutableListOf<Word>()
 
@@ -34,6 +28,12 @@ fun main() {
 
             "2" -> {
                 println(2)
+                // Печать статистики по выученым словам
+                val totalWordsCount = dictionary.size
+                val correctAnswers = dictionary.filter { it.correctAnswersCount > 3 }.size
+                val percentCorrectAnswers = (correctAnswers * 100 / totalWordsCount)
+                println("Выучено $correctAnswers из $totalWordsCount слов | $percentCorrectAnswers%")
+                //
             }
 
             "0" -> return
