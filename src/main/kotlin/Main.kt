@@ -18,12 +18,28 @@ fun main() {
         println("1 - Учить слова")
         println("2 - Статистика")
         println("0 - Выход")
-
         val input = readln()
 
         when (input) {
             "1" -> {
-                println(1)
+                while (true) {
+                    println("Меню изучения слов.")
+                    var nonLearnedWords = dictionary.filter { it.correctAnswersCount <= 3 }
+                    if (nonLearnedWords.size == 0) {
+                        println("Все слова выучены")
+                        return
+                    }
+                    val answers = nonLearnedWords.shuffled().take(4)
+                    val question = answers.shuffled().take(1)
+                    var answer: Int
+                    println("Слово для изучения:")
+                    question.forEach {
+                        println(it.original)
+                    }
+                    println("Введите номер с правильным вариантом перевода:")
+                    answers.forEachIndexed { index, value -> println("$index - ${value.translate}") }
+                    answer = readln().toInt()
+                }
             }
 
             "2" -> {
