@@ -1,7 +1,7 @@
-hello|привет|2
+hello|привет|3
 dog|собака|4
 cat|кошка|4
-thank you|спасибо|2
+thank you|спасибо|3
 morning|утро|1
 day|день|5
 evening|вечер|2
