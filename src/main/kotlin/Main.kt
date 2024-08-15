@@ -1,78 +1,55 @@
 package org.example
 
-import java.io.File
+data class Word(
+    val qustionWord: String,
+    val translate: String,
+    var correctAnswersCount: Int = 0,
+)
+
+fun Question.asConsoleString(): String {
+    val variants = this.variants
+        .mapIndexed { index: Int, word: Word -> " ${index + 1} - ${word.translate}" }
+        .joinToString("\n")
+    return this.correctAnswer.qustionWord + "\n" + variants + "\n 0 - выйти в меню"
+}
 
 fun main() {
-    val dictionary = mutableListOf<Word>()
-    val wordsFile = File("words.txt")
-    val lines: List<String> = wordsFile.readLines()
-    for (line in lines) {
-        val item = line.split("|")
-        val word = Word(original = item[0], translate = item[1], correctAnswersCount = item[2].toInt())
-        dictionary.add(word)
-    }
+    val trainer = LearnWordsTRainer()
 
     while (true) {
-        println("Меню:")
-        println("1 - Учить слова")
-        println("2 - Статистика")
-        println("0 - Выход")
-        val input = readln()
+        println("Меню: 1 - Учить слова, 2 - Статистика, 0 - Выход")
 
-        when (input) {
-            "1" -> {
+        when (readln().toIntOrNull()) {
+            1 -> {
                 while (true) {
-                    print("Слово: ")
-                    val nonLearnedWords = dictionary.filter { it.correctAnswersCount <= 3 }
-                    if (nonLearnedWords.isEmpty()) {
+                    val question = trainer.getNextQuestion()
+                    if (question == null) {
                         println("Все слова выучены")
-                        return
-                    }
-                    val answers = nonLearnedWords.shuffled().take(4)
-                    val question = answers.shuffled().take(1)
-                    var answer: Int
+                        break
+                    } else {
+                        println(question.asConsoleString())
 
-                    question.forEach {
-                        println(it.original)
-                    }
-                    println("Введите номер с правильным вариантом перевода:")
-                    answers.forEachIndexed { index, value -> println("${index + 1} - ${value.translate}") }
-                    println("0 - Выход в главное меню")
+                        val userAnswerInput = readln().toIntOrNull()
+                        if (userAnswerInput == 0) break
 
-                    answer = (readln().toInt())
-                    if (answer == 0) break
-                    if (answers[answer - 1].translate == question[0].translate) {
-
-                        dictionary.forEach {
-                            if (it.translate == answers[answer].translate) {
-                                it.correctAnswersCount++
-                            }
+                        if (trainer.checkAnswer(userAnswerInput?.minus(1))) {
+                            println("Правильно!\n")
+                        } else {
+                            println("Неправильно! ${question.correctAnswer.qustionWord} - это ${question.correctAnswer.translate}\n")
                         }
-                        saveDictionary(dictionary, wordsFile)
                     }
                 }
             }
 
-            "2" -> {
-                // Печать статистики по выученым словам
-                val totalWordsCount = dictionary.size
-                val correctAnswers = dictionary.filter { it.correctAnswersCount > 3 }.size
-                val percentCorrectAnswers = (correctAnswers * 100 / totalWordsCount)
-                println("Выучено $correctAnswers из $totalWordsCount слов | $percentCorrectAnswers%")
-                //
+            2 -> {
+                val statistics = trainer.getStatistics()
+                println("Выучено ${statistics.learned} из ${statistics.total} слов | ${statistics.percent}%")
             }
 
-            "0" -> return
+            0 -> break
             else -> {
-                println("Введено некорректное число")
+                println("Введите 1, 2 или 0")
             }
         }
-    }
-}
-
-fun saveDictionary(dictionary: MutableList<Word>,  wordsFile: File) {
-    wordsFile.writeText("")
-    dictionary.forEach {
-        wordsFile.appendText("${ it.original }|${it.translate}|${it.correctAnswersCount}\n")
     }
 }
