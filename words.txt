@@ -1,10 +1,10 @@
-hello|привет|3
+hello|привет|2
 dog|собака|4
 cat|кошка|4
 thank you|спасибо|2
 morning|утро|1
 day|день|5
-evening|вечер|3
+evening|вечер|2
 night|ночь|5
 summer|лето|5
 winter|зима|2
