@@ -13,19 +13,19 @@ data class Question(
     val correctAnswer: Word,
 )
 
-class LearnWordsTRainer {
+class LearnWordsTRainer(private val learnedAnswerCount: Int = 3, val requireCountAnswers: Int = 3) {
     private var question: Question? = null
     private val dictionary = loadDictionary()
 
     fun getStatistics(): Statistics {
-        val learned = dictionary.filter { it.correctAnswersCount >= 3 }.size
+        val learned = dictionary.filter { it.correctAnswersCount >= requireCountAnswers }.size
         val total = dictionary.size
         val percent = learned * 100 / total
         return Statistics(learned, total, percent)
     }
 
     fun getNextQuestion(): Question? {
-        val notLearnedList = dictionary.filter { it.correctAnswersCount < 3 }
+        val notLearnedList = dictionary.filter { it.correctAnswersCount < learnedAnswerCount }
         if (notLearnedList.isEmpty()) return null
         val questionWords = notLearnedList.take(4).shuffled()
         val correctAnswer = questionWords.random()
@@ -63,7 +63,7 @@ class LearnWordsTRainer {
         val wordsFile = File("words.txt")
         wordsFile.writeText("")
         for (word in words) {
-            wordsFile.appendText("${word.qustionWord}|${word.translate}|${word.correctAnswersCount}")
+            wordsFile.appendText("${word.qustionWord}|${word.translate}|${word.correctAnswersCount}\n")
         }
     }
 }
