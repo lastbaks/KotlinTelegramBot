@@ -13,7 +13,11 @@ data class Question(
     val correctAnswer: Word,
 )
 
-class LearnWordsTrainer(private val learnedAnswerCount: Int = 3, private val requireAnswerCount: Int = 3, private val countOfQuestionWords: Int = 4,) {
+class LearnWordsTrainer(
+    private val learnedAnswerCount: Int = 3,
+    private val requireAnswerCount: Int = 3,
+    private val countOfQuestionWords: Int = 4,
+    ) {
     private var question: Question? = null
     private val dictionary = loadDictionary()
 
