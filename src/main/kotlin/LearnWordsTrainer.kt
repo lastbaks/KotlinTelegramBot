@@ -13,16 +13,16 @@ data class Question(
     val correctAnswer: Word,
 )
 
-class LearnWordsTRainer(
+class LearnWordsTrainer(
     private val learnedAnswerCount: Int = 3,
-    private val requireCountAnswers: Int = 3,
+    private val requireAnswerCount: Int = 3,
     private val countOfQuestionWords: Int = 4,
-) {
+    ) {
     private var question: Question? = null
     private val dictionary = loadDictionary()
 
     fun getStatistics(): Statistics {
-        val learned = dictionary.filter { it.correctAnswersCount >= requireCountAnswers }.size
+        val learned = dictionary.filter { it.correctAnswersCount >= requireAnswerCount }.size
         val total = dictionary.size
         val percent = learned * 100 / total
         return Statistics(learned, total, percent)
