@@ -21,7 +21,6 @@ fun main(args: Array<String>) {
         val endUpdateId = updates.lastIndexOf(",\n\"message\"")
         if (startUpdateId == -1 || endUpdateId == -1) continue
         val updateIdString = updates.substring(startUpdateId + 11, endUpdateId)
-//        println(updateIdString)
         updateId = updateIdString.toInt() + 1
 
         val messageTextRegex: Regex = "\"text\":\"(.+?)\"".toRegex()
