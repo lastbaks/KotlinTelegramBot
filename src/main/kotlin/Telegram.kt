@@ -24,7 +24,9 @@ fun main(args: Array<String>) {
         updateId = updateIdString.toInt() + 1
 
         val messageTextRegex: Regex = "\"text\":\"(.+?)\"".toRegex()
-        val matchResult: MatchResult? = messageTextRegex.find(updates)
+
+        val chatIdRegex: Regex = "\"chat\":[{]\"id\":(.+?),\"first_name\"".toRegex()
+        val matchResult: MatchResult? = chatIdRegex.find(updates)
         val groups = matchResult?.groups
         val text = groups?.get(1)?.value
         println(text)
@@ -39,3 +41,8 @@ fun getUpdates(botToken: String, updateId: Int): String {
 
     return (response.body())
 }
+
+
+
+
+
