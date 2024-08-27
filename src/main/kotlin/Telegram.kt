@@ -1,9 +1,11 @@
 package org.example
 
 import java.net.URI
+import java.net.URLEncoder
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.nio.charset.StandardCharsets
 
 const val HOST:String = "https://api.telegram.org"
 
@@ -28,24 +30,16 @@ fun main(args: Array<String>) {
         val messageTextRegex: Regex = "\"text\":\"(.+?)\"".toRegex()
 
         val chatIdRegex: Regex = "\"chat\":[{]\"id\":(.+?),\"first_name\"".toRegex()
-        val matchResult: MatchResult? = messageTextRegex.find(updates)
+        val matchResult: MatchResult? = chatIdRegex.find(updates)
         val groups = matchResult?.groups
-        val text = groups?.get(1)?.value
-        println(text)
-        telegramBotService.sendMessage(botToken, updates, updateId, "text to send")
+        val chatId = groups?.get(1)?.value
+        println(chatId)
+        telegramBotService.sendMessage(botToken, chatId!!.toInt(), "text to send")
     }
 }
 
-//fun getUpdates(botToken: String, updateId: Int): String {
-//    val urlGetUpdates = "$HOST/bot$botToken/getUpdates?offset=$updateId"
-//    val client: HttpClient = HttpClient.newBuilder().build()
-//    val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
-//    val response: HttpResponse<String> = client.send(request, HttpResponse.BodyHandlers.ofString())
-//
-//    return (response.body())
-//}
-
 class TelegramBotService{
+
     fun getUpdates(botToken: String, updateId: Int) : String {
         val urlGetUpdates = "$HOST/bot$botToken/getUpdates?offset=$updateId"
         val client: HttpClient = HttpClient.newBuilder().build()
@@ -55,16 +49,12 @@ class TelegramBotService{
         return (response.body())
     }
 
-    fun sendMessage(botToken: String, updates: String, updateId: Int, textToSend: String) {
-        val urlGetUpdates = "$HOST/bot$botToken/getUpdates?offset=$updateId"
+    fun sendMessage(botToken: String, chatId: Int, text: String) {
+        val encodedText = URLEncoder.encode(text, StandardCharsets.UTF_8.toString())
+        val urlSendMessage = "$HOST/bot$botToken/sendMessage?chat_id=$chatId&text=$encodedText"
         val client: HttpClient = HttpClient.newBuilder().build()
-        val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
+        val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlSendMessage)).build()
         val response: HttpResponse<String> = client.send(request, HttpResponse.BodyHandlers.ofString())
-        val messageTextRegex: Regex = "\"chat\":[{]\"id\":(.+?),\"first_name\"".toRegex()
-        val matchResult: MatchResult? = messageTextRegex.find(updates)
-        val groups = matchResult?.groups
-        val text = groups?.get(1)?.value
-        println(text)
     }
 }
 
