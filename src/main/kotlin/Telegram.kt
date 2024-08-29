@@ -7,6 +7,9 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 
+const val LEARN_WORDS_CLICKED = "learn_words_clicked"
+const val STATISTICS_CLICKED = "statistics_clicked"
+
 fun main(args: Array<String>) {
 
     val botToken = args[0]
@@ -38,7 +41,7 @@ fun main(args: Array<String>) {
             telegramBotService.sendMenu(botToken, chatId)
         }
 
-        if (data?.lowercase() == "statictics_clicked" && chatId != null) {
+        if (data?.lowercase() == "$STATISTICS_CLICKED" && chatId != null) {
             telegramBotService.sendMessage(botToken, chatId, "Выучено 10 из 10 слов | 100% ")
         }
     }
@@ -46,10 +49,10 @@ fun main(args: Array<String>) {
 
 class TelegramBotService {
 
-    val HOST: String = "https://api.telegram.org"
+    val host: String = "https://api.telegram.org"
 
     fun getUpdates(botToken: String, updateId: Int): String {
-        val urlGetUpdates = "$HOST/bot$botToken/getUpdates?offset=$updateId"
+        val urlGetUpdates = "$host/bot$botToken/getUpdates?offset=$updateId"
         val client: HttpClient = HttpClient.newBuilder().build()
         val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
         val response: HttpResponse<String> = client.send(request, HttpResponse.BodyHandlers.ofString())
@@ -59,7 +62,7 @@ class TelegramBotService {
     fun sendMessage(botToken: String, chatId: Int, message: String) {
         val encoded = URLEncoder.encode(message, StandardCharsets.UTF_8)
         println(encoded)
-        val urlSendMessage = "$HOST/bot$botToken/sendMessage?chat_id=$chatId&text=$encoded"
+        val urlSendMessage = "$host/bot$botToken/sendMessage?chat_id=$chatId&text=$encoded"
         val client: HttpClient = HttpClient.newBuilder().build()
         val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlSendMessage)).build()
         client.send(request, HttpResponse.BodyHandlers.ofString())
@@ -67,7 +70,7 @@ class TelegramBotService {
 
     fun sendMenu(botToken: String, chatId: Int) : String {
 
-        val sendMessage = "$HOST/bot$botToken/sendMessage"
+        val sendMessage = "$host/bot$botToken/sendMessage"
         val sendMenuBody = """
             {
                 "chat_id": $chatId,
@@ -77,11 +80,11 @@ class TelegramBotService {
                         [
                             {
                                 "text": "Изучить слова",
-                                "callback_data": "learn_words_clicked"
+                                "callback_data": "$LEARN_WORDS_CLICKED"
                             },
                             {
                                 "text": "Статистика",
-                                "callback_data": "statictics_clicked"
+                                "callback_data": "$STATISTICS_CLICKED"
                             }
                         ]
                     ]
