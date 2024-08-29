@@ -7,60 +7,96 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 
-const val HOST: String = "https://api.telegram.org"
-
 fun main(args: Array<String>) {
 
     val botToken = args[0]
-    var updateId = 0
+    var lastUpdateId = 0
     val telegramBotService = TelegramBotService()
+
+    val updateIdRegex = "\"update_id\":(\\d+)".toRegex()
+    val messageTextRegex: Regex = "\"text\":\"(.+?)\"".toRegex()
+    val chatIdRegex: Regex = "\"chat\":\\{\"id\":(\\d+)".toRegex()
+    val dataRegex: Regex = "\"data\":\"(.+?)\"".toRegex()
 
     while (true) {
         Thread.sleep(2000)
-
-        val updates: String = telegramBotService.getUpdates(botToken, updateId)
+        val updates: String = telegramBotService.getUpdates(botToken, lastUpdateId)
         println(updates)
 
-        val startUpdateId = updates.lastIndexOf("update_id")
-        val endUpdateId = updates.lastIndexOf(",\n\"message\"")
-        if (startUpdateId == -1 || endUpdateId == -1) continue
-        val updateIdString = updates.substring(startUpdateId + 11, endUpdateId)
-        updateId = updateIdString.toIntOrNull()?.plus(1) ?: continue
+        val updateId = updateIdRegex.find(updates)?.groups?.get(1)?.value?.toIntOrNull() ?: continue
+        lastUpdateId = updateId + 1
 
-        val messageTextRegex: Regex = "\"text\":\"(.+?)\"".toRegex()
-        var matchResult: MatchResult? = messageTextRegex.find(updates)
-        var groups = matchResult?.groups
-        val message = groups?.get(1)?.value ?: continue
+        val message = messageTextRegex.find(updates)?.groups?.get(1)?.value
+        val chatId = chatIdRegex.find(updates)?.groups?.get(1)?.value?.toInt()
+        val data = dataRegex.find(updates)?.groups?.get(1)?.value
 
-        val chatIdRegex: Regex = "\"chat\":[{]\"id\":(.+?),\"first_name\"".toRegex()
-        matchResult = chatIdRegex.find(updates)
-        groups = matchResult?.groups
-        val chatId = groups?.get(1)?.value ?: continue
+        if (message?.lowercase() == "hello" && chatId != null) {
+            telegramBotService.sendMessage(botToken, chatId, "Hello!")
+        }
 
-        if (message == "Hello") {
-            telegramBotService.sendMessage(botToken, chatId.toInt(), "Hello!")
-        } else {
-            telegramBotService.sendMessage(botToken, chatId.toInt(), "Пока я умею отвечать только на Hello")
+        if (message?.lowercase() == "/start" && chatId != null) {
+            telegramBotService.sendMenu(botToken, chatId)
+        }
+
+        if (data?.lowercase() == "statictics_clicked" && chatId != null) {
+            telegramBotService.sendMessage(botToken, chatId, "Выучено 10 из 10 слов | 100% ")
         }
     }
 }
 
 class TelegramBotService {
 
+    val HOST: String = "https://api.telegram.org"
+
     fun getUpdates(botToken: String, updateId: Int): String {
         val urlGetUpdates = "$HOST/bot$botToken/getUpdates?offset=$updateId"
         val client: HttpClient = HttpClient.newBuilder().build()
         val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
         val response: HttpResponse<String> = client.send(request, HttpResponse.BodyHandlers.ofString())
-
         return response.body()
     }
 
-    fun sendMessage(botToken: String, chatId: Int, text: String) {
-        val encodedText = URLEncoder.encode(text, StandardCharsets.UTF_8.toString())
-        val urlSendMessage = "$HOST/bot$botToken/sendMessage?chat_id=$chatId&text=$encodedText"
+    fun sendMessage(botToken: String, chatId: Int, message: String) {
+        val encoded = URLEncoder.encode(message, StandardCharsets.UTF_8)
+        println(encoded)
+        val urlSendMessage = "$HOST/bot$botToken/sendMessage?chat_id=$chatId&text=$encoded"
         val client: HttpClient = HttpClient.newBuilder().build()
         val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlSendMessage)).build()
         client.send(request, HttpResponse.BodyHandlers.ofString())
+    }
+
+    fun sendMenu(botToken: String, chatId: Int) : String {
+
+        val sendMessage = "$HOST/bot$botToken/sendMessage"
+        val sendMenuBody = """
+            {
+                "chat_id": $chatId,
+                "text": "Основное меню",
+                "reply_markup": {
+                    "inline_keyboard": [
+                        [
+                            {
+                                "text": "Изучить слова",
+                                "callback_data": "learn_words_clicked"
+                            },
+                            {
+                                "text": "Статистика",
+                                "callback_data": "statictics_clicked"
+                            }
+                        ]
+                    ]
+                }
+            }
+        """.trimIndent()
+
+        val client: HttpClient = HttpClient.newBuilder().build()
+        val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(sendMessage))
+            .header("Content-type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(sendMenuBody))
+            .build()
+
+        val response: HttpResponse<String> = client.send(request, HttpResponse.BodyHandlers.ofString())
+
+        return response.body()
     }
 }
