@@ -41,7 +41,7 @@ fun main(args: Array<String>) {
             telegramBotService.sendMenu(botToken, chatId)
         }
 
-        if (data?.lowercase() == "$STATISTICS_CLICKED" && chatId != null) {
+        if (data?.lowercase() == STATISTICS_CLICKED && chatId != null) {
             telegramBotService.sendMessage(botToken, chatId, "Выучено 10 из 10 слов | 100% ")
         }
     }
@@ -49,7 +49,7 @@ fun main(args: Array<String>) {
 
 class TelegramBotService {
 
-    val host: String = "https://api.telegram.org"
+    private val host: String = "https://api.telegram.org"
 
     fun getUpdates(botToken: String, updateId: Int): String {
         val urlGetUpdates = "$host/bot$botToken/getUpdates?offset=$updateId"
