@@ -12,6 +12,13 @@ const val STATISTICS_CLICKED = "statistics_clicked"
 
 fun main(args: Array<String>) {
 
+    val trainer = try {
+        LearnWordsTrainer(3, 3, 4)
+    } catch (e: Exception) {
+        println("невозможно загрузить словарь")
+        return
+    }
+
     val botToken = args[0]
     var lastUpdateId = 0
     val telegramBotService = TelegramBotService()
@@ -42,7 +49,9 @@ fun main(args: Array<String>) {
         }
 
         if (data?.lowercase() == STATISTICS_CLICKED && chatId != null) {
-            telegramBotService.sendMessage(botToken, chatId, "Выучено 10 из 10 слов | 100% ")
+            val statistics = trainer.getStatistics()
+            val statisticsMessage = ("Выучено ${statistics.learned} из ${statistics.total} слов | ${statistics.percent}%")
+            telegramBotService.sendMessage(botToken, chatId, statisticsMessage)
         }
     }
 }
@@ -102,4 +111,17 @@ class TelegramBotService {
 
         return response.body()
     }
+}
+
+data class Word(
+    val questionWord: String,
+    val translate: String,
+    var correctAnswersCount: Int = 0,
+)
+
+fun Question.asConsoleString(): String {
+    val variants = this.variants
+        .mapIndexed { index: Int, word: Word -> " ${index + 1} - ${word.translate}" }
+        .joinToString("\n")
+    return this.correctAnswer.questionWord + "\n" + variants + "\n 0 - выйти в меню"
 }

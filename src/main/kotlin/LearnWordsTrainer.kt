@@ -79,7 +79,7 @@ class LearnWordsTrainer(
         val wordsFile = File("words.txt")
         wordsFile.writeText("")
         for (word in words) {
-            wordsFile.appendText("${word.qustionWord}|${word.translate}|${word.correctAnswersCount}\n")
+            wordsFile.appendText("${word.questionWord}|${word.translate}|${word.correctAnswersCount}\n")
         }
     }
 }
