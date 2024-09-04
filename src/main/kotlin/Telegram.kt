@@ -31,7 +31,6 @@ fun main(args: Array<String>) {
 
     while (true) {
         Thread.sleep(2000)
-        val question = trainer.getNextQuestion()
         val updates: String = telegramBotService.getUpdates(botToken, lastUpdateId)
         println(updates)
 
@@ -57,12 +56,7 @@ fun main(args: Array<String>) {
         }
 
         if (data?.lowercase() == LEARN_WORDS_CLICKED && chatId != null) {
-            if (question == null) {
-                telegramBotService.sendMessage(botToken, chatId, "Вы выучили все слова в базе")
-                break
-            } else {
-                telegramBotService.sendQuestion(botToken, chatId, question)
-            }
+            telegramBotService.checkNextQuestionAndSend(trainer, botToken, chatId)
         }
     }
 }
@@ -71,7 +65,17 @@ class TelegramBotService {
 
     private val host: String = "https://api.telegram.org"
 
-    fun getUpdates(botToken: String, updateId: Int): String {
+    fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, token: String, chatId: Int) {
+        val nextQuestion = trainer.getNextQuestion()
+        if (nextQuestion == null) {
+            sendMessage(token, chatId, "Вы выучили все слова в базе")
+        }
+        else {
+            sendQuestion(token, chatId, nextQuestion)
+        }
+    }
+
+        fun getUpdates(botToken: String, updateId: Int): String {
         val urlGetUpdates = "$host/bot$botToken/getUpdates?offset=$updateId"
         val client: HttpClient = HttpClient.newBuilder().build()
         val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
