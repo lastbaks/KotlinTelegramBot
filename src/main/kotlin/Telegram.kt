@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets
 
 const val LEARN_WORDS_CLICKED = "learn_words_clicked"
 const val STATISTICS_CLICKED = "statistics_clicked"
+const val CALLBACK_DATA_ANSWER_PREFIX = "answer_"
 
 fun main(args: Array<String>) {
 
@@ -53,6 +54,10 @@ fun main(args: Array<String>) {
             val statisticsMessage = ("Выучено ${statistics.learned} из ${statistics.total} слов | ${statistics.percent}%")
             telegramBotService.sendMessage(botToken, chatId, statisticsMessage)
         }
+
+        if (data?.lowercase() == LEARN_WORDS_CLICKED && chatId != null) {
+            telegramBotService.checkNextQuestionAndSend(trainer, botToken, chatId)
+        }
     }
 }
 
@@ -60,7 +65,17 @@ class TelegramBotService {
 
     private val host: String = "https://api.telegram.org"
 
-    fun getUpdates(botToken: String, updateId: Int): String {
+    fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, token: String, chatId: Int) {
+        val nextQuestion = trainer.getNextQuestion()
+        if (nextQuestion == null) {
+            sendMessage(token, chatId, "Вы выучили все слова в базе")
+        }
+        else {
+            sendQuestion(token, chatId, nextQuestion)
+        }
+    }
+
+        fun getUpdates(botToken: String, updateId: Int): String {
         val urlGetUpdates = "$host/bot$botToken/getUpdates?offset=$updateId"
         val client: HttpClient = HttpClient.newBuilder().build()
         val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
@@ -111,6 +126,51 @@ class TelegramBotService {
 
         return response.body()
     }
+
+    fun sendQuestion(botToken: String, chatId: Int, question: Question) : String {
+
+        val sendMessage = "$host/bot$botToken/sendMessage"
+        val indexVariants = (question.variants.mapIndexed{index: Int, word: Word -> "$CALLBACK_DATA_ANSWER_PREFIX${index + 1}" })
+        val sendMenuBody = """
+            {
+                "chat_id": $chatId,
+                "text": "${question.correctAnswer.questionWord}",
+                "reply_markup": {
+                    "inline_keyboard": [
+                        [
+                            {
+                                "text": "${question.variants[0].translate}",
+                                "callback_data": "${indexVariants[0]}"
+                            },
+                            {
+                                "text": "${question.variants[1].translate}",
+                                "callback_data": "${indexVariants[1]}"
+                            },
+                            {
+                                "text": "${question.variants[2].translate}",
+                                "callback_data": "${indexVariants[2]}"
+                            },
+                            {
+                                "text": "${question.variants[3].translate}",
+                                "callback_data": "${indexVariants[3]}"
+                            }
+                        ]
+                    ]
+                }
+            }
+        """.trimIndent()
+
+        val client: HttpClient = HttpClient.newBuilder().build()
+        val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(sendMessage))
+            .header("Content-type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(sendMenuBody))
+            .build()
+
+        val response: HttpResponse<String> = client.send(request, HttpResponse.BodyHandlers.ofString())
+
+        return response.body()
+    }
+
 }
 
 data class Word(
