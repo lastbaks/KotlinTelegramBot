@@ -16,13 +16,14 @@ fun main(args: Array<String>) {
     val trainer = try {
         LearnWordsTrainer(3, 3, 4)
     } catch (e: Exception) {
-        println("невозможно загрузить словарь")
+        println("Невозможно загрузить словарь")
         return
     }
 
     val botToken = args[0]
     var lastUpdateId = 0
     val telegramBotService = TelegramBotService()
+    var answerTranslate = ""
 
     val updateIdRegex = "\"update_id\":(\\d+)".toRegex()
     val messageTextRegex: Regex = "\"text\":\"(.+?)\"".toRegex()
@@ -32,7 +33,6 @@ fun main(args: Array<String>) {
     while (true) {
         Thread.sleep(2000)
         val updates: String = telegramBotService.getUpdates(botToken, lastUpdateId)
-        var answerTranslate: String = ""
         println(updates)
 
         val updateId = updateIdRegex.find(updates)?.groups?.get(1)?.value?.toIntOrNull() ?: continue
@@ -67,10 +67,10 @@ fun main(args: Array<String>) {
                 if (trainer.checkAnswer(variantAnswerIndex.minus(1))) {
                     telegramBotService.sendMessage(botToken, chatId, "Правильно!")
                 } else {
-                    telegramBotService.sendMessage(botToken, chatId, "Неправильно. Правильный ответ: $answerTranslate")
+                        telegramBotService.sendMessage(botToken, chatId, "Неправильно. Правильный ответ: $answerTranslate")
                     println("Не правильно!  $answerTranslate")
                 }
-                telegramBotService.checkNextQuestionAndSend(trainer, botToken, chatId)
+                answerTranslate = telegramBotService.checkNextQuestionAndSend(trainer, botToken, chatId)
             }
         }
     }
@@ -109,7 +109,6 @@ class TelegramBotService {
     }
 
     fun sendMenu(botToken: String, chatId: Int) : String {
-
         val sendMessage = "$host/bot$botToken/sendMessage"
         val sendMenuBody = """
             {
@@ -143,7 +142,7 @@ class TelegramBotService {
         return response.body()
     }
 
-    fun sendQuestion(botToken: String, chatId: Int, question: Question) : String {
+    private fun sendQuestion(botToken: String, chatId: Int, question: Question) : String {
 
         val sendMessage = "$host/bot$botToken/sendMessage"
         val indexVariants = (question.variants.mapIndexed{index: Int, word: Words -> "$CALLBACK_DATA_ANSWER_PREFIX${index + 1}" })
