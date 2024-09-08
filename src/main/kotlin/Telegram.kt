@@ -16,13 +16,14 @@ fun main(args: Array<String>) {
     val trainer = try {
         LearnWordsTrainer(3, 3, 4)
     } catch (e: Exception) {
-        println("невозможно загрузить словарь")
+        println("Невозможно загрузить словарь")
         return
     }
 
     val botToken = args[0]
     var lastUpdateId = 0
     val telegramBotService = TelegramBotService()
+    var answerTranslate = ""
 
     val updateIdRegex = "\"update_id\":(\\d+)".toRegex()
     val messageTextRegex: Regex = "\"text\":\"(.+?)\"".toRegex()
@@ -56,7 +57,21 @@ fun main(args: Array<String>) {
         }
 
         if (data?.lowercase() == LEARN_WORDS_CLICKED && chatId != null) {
-            telegramBotService.checkNextQuestionAndSend(trainer, botToken, chatId)
+            answerTranslate = telegramBotService.checkNextQuestionAndSend(trainer, botToken, chatId)
+        }
+
+        if (data != null && chatId != null) {
+            if(data.startsWith(CALLBACK_DATA_ANSWER_PREFIX)) {
+                val variantAnswerIndex = data.substringAfter(CALLBACK_DATA_ANSWER_PREFIX).toInt()
+
+                if (trainer.checkAnswer(variantAnswerIndex.minus(1))) {
+                    telegramBotService.sendMessage(botToken, chatId, "Правильно!")
+                } else {
+                        telegramBotService.sendMessage(botToken, chatId, "Неправильно. Правильный ответ: $answerTranslate")
+                    println("Не правильно!  $answerTranslate")
+                }
+                answerTranslate = telegramBotService.checkNextQuestionAndSend(trainer, botToken, chatId)
+            }
         }
     }
 }
@@ -65,7 +80,7 @@ class TelegramBotService {
 
     private val host: String = "https://api.telegram.org"
 
-    fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, token: String, chatId: Int) {
+    fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, token: String, chatId: Int): String {
         val nextQuestion = trainer.getNextQuestion()
         if (nextQuestion == null) {
             sendMessage(token, chatId, "Вы выучили все слова в базе")
@@ -73,9 +88,10 @@ class TelegramBotService {
         else {
             sendQuestion(token, chatId, nextQuestion)
         }
+        return nextQuestion?.correctAnswer?.translate ?: ""
     }
 
-        fun getUpdates(botToken: String, updateId: Int): String {
+    fun getUpdates(botToken: String, updateId: Int): String {
         val urlGetUpdates = "$host/bot$botToken/getUpdates?offset=$updateId"
         val client: HttpClient = HttpClient.newBuilder().build()
         val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
@@ -93,7 +109,6 @@ class TelegramBotService {
     }
 
     fun sendMenu(botToken: String, chatId: Int) : String {
-
         val sendMessage = "$host/bot$botToken/sendMessage"
         val sendMenuBody = """
             {
@@ -127,10 +142,10 @@ class TelegramBotService {
         return response.body()
     }
 
-    fun sendQuestion(botToken: String, chatId: Int, question: Question) : String {
+    private fun sendQuestion(botToken: String, chatId: Int, question: Question) : String {
 
         val sendMessage = "$host/bot$botToken/sendMessage"
-        val indexVariants = (question.variants.mapIndexed{index: Int, word: Word -> "$CALLBACK_DATA_ANSWER_PREFIX${index + 1}" })
+        val indexVariants = (question.variants.mapIndexed{index: Int, word: Words -> "$CALLBACK_DATA_ANSWER_PREFIX${index + 1}" })
         val sendMenuBody = """
             {
                 "chat_id": $chatId,
@@ -173,7 +188,7 @@ class TelegramBotService {
 
 }
 
-data class Word(
+data class Words(
     val questionWord: String,
     val translate: String,
     var correctAnswersCount: Int = 0,
@@ -181,7 +196,8 @@ data class Word(
 
 fun Question.asConsoleString(): String {
     val variants = this.variants
-        .mapIndexed { index: Int, word: Word -> " ${index + 1} - ${word.translate}" }
+        .mapIndexed { index: Int, word: Words -> " ${index + 1} - ${word.translate}" }
         .joinToString("\n")
     return this.correctAnswer.questionWord + "\n" + variants + "\n 0 - выйти в меню"
 }
+
