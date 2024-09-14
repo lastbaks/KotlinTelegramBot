@@ -1,12 +1,12 @@
-hello|привет|2
-dog|собака|4
-cat|кошка|4
-thank you|спасибо|2
-morning|утро|1
-day|день|5
-evening|вечер|2
-night|ночь|5
-summer|лето|5
-winter|зима|2
-spring|весна|1
-autumn|осень|5
+hello|привет|0
+dog|собака|0
+cat|кошка|0
+thank you|спасибо|0
+morning|утро|0
+day|день|0
+evening|вечер|0
+night|ночь|0
+summer|лето|0
+winter|зима|0
+spring|весна|0
+autumn|осень|0
