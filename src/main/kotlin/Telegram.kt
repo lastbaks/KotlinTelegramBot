@@ -75,7 +75,6 @@ const val LEARN_WORDS_CLICKED = "learn_words_clicked"
 const val STATISTICS_CLICKED = "statistics_clicked"
 const val RESET_CLICKED = "resetClicked"
 const val CALLBACK_DATA_ANSWER_PREFIX = "answer_"
-var correctAnswerTranslate = "" // тут переменная
 
 fun main(args: Array<String>) {
 
@@ -86,7 +85,7 @@ fun main(args: Array<String>) {
 
     while (true) {
         Thread.sleep(2000)
-        val responseString: String = getUpdates(botToken, lastUpdateId) //тут обращение к классу
+        val responseString: String = getUpdates(botToken, lastUpdateId)
         println(responseString)
 
         val response: Response = json.decodeFromString(responseString)
@@ -106,11 +105,11 @@ fun handleUpdate(update: Update, json: Json, botToken: String, trainers: HashMap
     val trainer = trainers.getOrPut(chatId) { LearnWordsTrainer("$chatId.txt") }
 
     if (message?.lowercase() == "/start") {
-        sendMenu(json, botToken, chatId)// тут обращение к классу
+        sendMenu(json, botToken, chatId)
     }
 
     if (data?.lowercase() == LEARN_WORDS_CLICKED) {
-        correctAnswerTranslate = checkNextQuestionAndSend(json, trainer, botToken, chatId) // тут обращение к переменной answerTranslate
+        checkNextQuestionAndSend(json, trainer, botToken, chatId)
     }
 
     if (data?.startsWith(CALLBACK_DATA_ANSWER_PREFIX) == true) {
@@ -118,10 +117,10 @@ fun handleUpdate(update: Update, json: Json, botToken: String, trainers: HashMap
         if (trainer.checkAnswer(answerId)) {
             sendMessage(json, botToken, chatId, "Правильно!")
         } else {
-            sendMessage(json, botToken, chatId, "Неправильно. Правильный ответ: $correctAnswerTranslate"
+            sendMessage(json, botToken, chatId, "Неправильно. Правильный ответ: ${trainer.question?.correctAnswer?.translate}"
             )
         }
-        correctAnswerTranslate = checkNextQuestionAndSend(json, trainer, botToken, chatId)
+        checkNextQuestionAndSend(json, trainer, botToken, chatId)
     }
 
     if (data?.lowercase() == STATISTICS_CLICKED) {
@@ -138,14 +137,13 @@ fun handleUpdate(update: Update, json: Json, botToken: String, trainers: HashMap
 
     private val host: String = "https://api.telegram.org"
 
-    fun checkNextQuestionAndSend(json: Json, trainer: LearnWordsTrainer, token: String, chatId: Long): String {
+    fun checkNextQuestionAndSend(json: Json, trainer: LearnWordsTrainer, token: String, chatId: Long) {
         val nextQuestion = trainer.getNextQuestion()
         if (nextQuestion == null) {
             sendMessage(json, token, chatId, "Вы выучили все слова в базе")
         } else {
             sendQuestion(json, token, chatId, nextQuestion)
         }
-        return nextQuestion?.correctAnswer?.translate ?: ""
     }
 
     fun getUpdates(botToken: String, updateId: Long): String {
