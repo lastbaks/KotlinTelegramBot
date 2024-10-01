@@ -1,21 +1,15 @@
 package org.example
 
-//data class Word(
-//    val questionWord: String,
-//    val translate: String,
-//    var correctAnswersCount: Int = 0,
-//)
-//
-//fun Question.asConsoleString(): String {
-//    val variants = this.variants
-//        .mapIndexed { index: Int, word: Word -> " ${index + 1} - ${word.translate}" }
-//        .joinToString("\n")
-//    return this.correctAnswer.questionWord + "\n" + variants + "\n 0 - выйти в меню"
-//}
+fun Question.asConsoleString(): String {
+    val variants = this.variants
+        .mapIndexed { index: Int, word: Words -> " ${index + 1} - ${word.translate}" }
+        .joinToString("\n")
+    return this.correctAnswer.questionWord + "\n" + variants + "\n 0 - выйти в меню"
+}
 
 fun main() {
     val trainer = try {
-        LearnWordsTrainer(3, 3, 4)
+        LearnWordsTrainer(learnedAnswerCount = 3, countOfQuestionWords = 4)
     } catch (e: Exception) {
         println("невозможно загрузить словарь")
         return
